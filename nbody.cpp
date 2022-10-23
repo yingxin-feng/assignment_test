@@ -6,7 +6,7 @@
    An implementation pretty much from scratch, with inspiration from the Rust
    version, which used the idea of saving some of the ingredients of the
    compution in an array instead of recomputing them.
-   
+
    contributed by cvergu
    slightly modified by bmmeijers
 */
@@ -14,6 +14,9 @@
 #define _USE_MATH_DEFINES // https://docs.microsoft.com/en-us/cpp/c-runtime-library/math-constants?view=msvc-160
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <chrono>
 
 
 // these values are constant and not allowed to be changed
@@ -94,7 +97,7 @@ public:
 };
 
 
-void advance(body state[BODIES_COUNT], double dt) {
+void advance(body state[BODIES_COUNT], double dt,bool output) {
     /*
      * We precompute the quantity (r_i - r_j)
      */
@@ -131,9 +134,16 @@ void advance(body state[BODIES_COUNT], double dt) {
     /*
      * Compute the new positions
      */
+    std::ofstream outfile;
+    if(output){outfile.open("c++_debug_output_5000.csv",std::ios::app);}
     for (unsigned int i = 0; i < BODIES_COUNT; ++i) {
         state[i].position += state[i].velocity * dt;
+        if(output){
+            outfile <<state[i].name<<","<<state[i].mass<<","<<state[i].position.x<<","<<state[i].position.y<<","<<state[i].position.z<<std::endl;
+            outfile.seekp(16L, std::ios::cur);
+        }
     }
+    if(output){outfile.close();}
 }
 
 void offset_momentum(body state[BODIES_COUNT]) {
@@ -240,19 +250,33 @@ body state[] = {
 
 
 int main(int argc, char **argv) {
+    argc = 2;
+    std::string times = "5000";
+    argv[1] = const_cast<char*>(times.c_str()); // https://blog.csdn.net/h649070/article/details/111293075
     if (argc != 2) {
-        std::cout << "This is " << argv[0] << std::endl;
+        std::cout << "This is " << argv[0]  << std::endl;
         std::cout << "Call this program with an integer as program argument" << std::endl;
         std::cout << "(to set the number of iterations for the n-body simulation)." << std::endl;
         return EXIT_FAILURE;
     } else {
+        std::ofstream outfile;
+        bool output = true;
+        auto begin = std::chrono::steady_clock::now(); // https://www.cnblogs.com/jerry-fuyi/p/12723287.html
+        if(output){
+            outfile.open("c++_debug_output_5000.csv");
+            outfile <<"name of the body,mass of the body,position x,position y,position z"<<std::endl;
+            outfile.close();
+        }
         const unsigned int n = atoi(argv[1]);
         offset_momentum(state);
         std::cout << energy(state) << std::endl;
         for (int i = 0; i < n; ++i) {
-            advance(state, 0.01);
+            advance(state, 0.01,output);
         }
         std::cout << energy(state) << std::endl;
+        auto finish = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(finish - begin);
+        std::cout << duration.count() << "ms" << std::endl;
         return EXIT_SUCCESS;
     }
 }
