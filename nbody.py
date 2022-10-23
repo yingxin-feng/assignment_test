@@ -10,13 +10,15 @@
 # slightly modified by bmmeijers
 
 import sys
+from copy import deepcopy
+from time import perf_counter
 from math import sqrt, pi as PI
 
 
 def combinations(l):
     result = []
     for x in range(len(l) - 1):
-        ls = l[x + 1 :]
+        ls = l[x + 1:]
         for y in ls:
             result.append((l[x][0], l[x][1], l[x][2], y[0], y[1], y[2]))
     return result
@@ -69,7 +71,9 @@ SYSTEM = tuple(BODIES.values())
 PAIRS = tuple(combinations(SYSTEM))
 
 
-def advance(dt, n, bodies=SYSTEM, pairs=PAIRS):
+def advance(dt, n, filename, bodies=SYSTEM, pairs=PAIRS, output=True):
+    velocity_list = []
+    position_list = []
     for i in range(n):
         for ([x1, y1, z1], v1, m1, [x2, y2, z2], v2, m2) in pairs:
             dx = x1 - x2
@@ -85,10 +89,26 @@ def advance(dt, n, bodies=SYSTEM, pairs=PAIRS):
             v2[2] += dz * b1m
             v2[1] += dy * b1m
             v2[0] += dx * b1m
+        velocity_list.extend([pairs[3][1], pairs[6][1], pairs[8][1], pairs[9][1], pairs[9][4]])
         for (r, [vx, vy, vz], m) in bodies:
             r[0] += dt * vx
             r[1] += dt * vy
             r[2] += dt * vz
+            position_list.append(r)
+    if output:
+        with open(filename, 'w') as f:
+            f.write(
+                'name of the body,mass of the body,position x,position y,position z,velocity x,velocity y,velocity z\n')
+            name_list = list(BODIES.keys())
+            mass_list = []
+            for (r, v, m) in bodies:
+                mass_list.append(m)
+            for i in range(len(velocity_list)):
+                index = i % 5
+                f.write('{},{},{},{},{},{},{},{}\n'.format(name_list[index], mass_list[index], position_list[i][0],
+                                                           position_list[i][1], position_list[i][2],
+                                                           velocity_list[i][0], velocity_list[i][1],
+                                                           velocity_list[i][2]))
 
 
 def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
@@ -113,16 +133,20 @@ def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
     v[2] = pz / m
 
 
-def main(n, ref="sun"):
+def main(n, filename, ref="sun"):
     offset_momentum(BODIES[ref])
     report_energy()
-    advance(0.01, n)
+    advance(0.01, n, filename)
     report_energy()
 
 
 if __name__ == "__main__":
+    sys.argv.extend([5000,'python_output_5000.csv'])
     if len(sys.argv) >= 2:
-        main(int(sys.argv[1]))
+        begin = perf_counter()
+        main(int(sys.argv[1]),str(sys.argv[2]))
+        finish = perf_counter()
+        print(finish-begin)
         sys.exit(0)
     else:
         print(f"This is {sys.argv[0]}")
