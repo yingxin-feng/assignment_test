@@ -1,0 +1,16 @@
+program_type,stimulation_time,running_time(ms)
+python,5000,203.5002
+c++debug,5000,19.7046
+c++release,5000,17.3204
+python,50000,665.7452
+c++debug,50000,47.4213
+c++release,50000,21.557
+python,500000,5524.8592
+c++debug,500000,285.8517
+c++release,500000,48.0939
+python,5000000,53303.402
+c++debug,5000000,2659.716
+c++release,5000000,299.3921
+python,50000000,530901.4734
+c++debug,50000000,26610.79
+c++release,50000000,2798.84
