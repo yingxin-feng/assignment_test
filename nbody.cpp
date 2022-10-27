@@ -1,22 +1,11 @@
-/*
-   Taken from:
-   The Computer Language Benchmarks Game
-   https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
-
-   An implementation pretty much from scratch, with inspiration from the Rust
-   version, which used the idea of saving some of the ingredients of the
-   compution in an array instead of recomputing them.
-
-   contributed by cvergu
-   slightly modified by bmmeijers
-*/
-
+#include <ios>
+#include <string>
 #define _USE_MATH_DEFINES // https://docs.microsoft.com/en-us/cpp/c-runtime-library/math-constants?view=msvc-160
 #include <cmath>
 #include <iostream>
+#include <stdlib.h>
 #include <fstream>
-#include <string>
-#include <chrono>
+#include<ctime>
 
 
 // these values are constant and not allowed to be changed
@@ -97,7 +86,7 @@ public:
 };
 
 
-void advance(body state[BODIES_COUNT], double dt,bool output) {
+void advance(body state[BODIES_COUNT], double dt) {
     /*
      * We precompute the quantity (r_i - r_j)
      */
@@ -134,16 +123,9 @@ void advance(body state[BODIES_COUNT], double dt,bool output) {
     /*
      * Compute the new positions
      */
-    std::ofstream outfile;
-    if(output){outfile.open("c++_debug_output_5000.csv",std::ios::app);}
     for (unsigned int i = 0; i < BODIES_COUNT; ++i) {
         state[i].position += state[i].velocity * dt;
-        if(output){
-            outfile <<state[i].name<<","<<state[i].mass<<","<<state[i].position.x<<","<<state[i].position.y<<","<<state[i].position.z<<std::endl;
-            outfile.seekp(16L, std::ios::cur);
-        }
     }
-    if(output){outfile.close();}
 }
 
 void offset_momentum(body state[BODIES_COUNT]) {
@@ -248,35 +230,112 @@ body state[] = {
         }
 };
 
+struct nbody
+{
+	double x, y, z;
+};
 
 int main(int argc, char **argv) {
-    argc = 2;
-    std::string times = "5000";
-    argv[1] = const_cast<char*>(times.c_str()); // https://blog.csdn.net/h649070/article/details/111293075
-    if (argc != 2) {
-        std::cout << "This is " << argv[0]  << std::endl;
-        std::cout << "Call this program with an integer as program argument" << std::endl;
-        std::cout << "(to set the number of iterations for the n-body simulation)." << std::endl;
-        return EXIT_FAILURE;
-    } else {
-        std::ofstream outfile;
-        bool output = true;
-        auto begin = std::chrono::steady_clock::now(); // https://www.cnblogs.com/jerry-fuyi/p/12723287.html
-        if(output){
-            outfile.open("c++_debug_output_5000.csv");
-            outfile <<"name of the body,mass of the body,position x,position y,position z"<<std::endl;
-            outfile.close();
-        }
-        const unsigned int n = atoi(argv[1]);
-        offset_momentum(state);
-        std::cout << energy(state) << std::endl;
-        for (int i = 0; i < n; ++i) {
-            advance(state, 0.01,output);
-        }
-        std::cout << energy(state) << std::endl;
-        auto finish = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(finish - begin);
-        std::cout << duration.count() << "ms" << std::endl;
-        return EXIT_SUCCESS;
+    int n = 20;
+    offset_momentum(state);
+    std::cout << energy(state) << std::endl;
+
+    nbody sun[n];
+	nbody jupiter[n];
+    nbody saturn[n];
+    nbody uranus[n];
+    nbody neptune[n];
+
+    clock_t startTime,endTime;
+    startTime = clock();//计时开始
+
+    for (int i = 0; i < n; ++i) {
+
+        sun[i].x = state[0].position.x;
+        sun[i].y = state[0].position.y;
+        sun[i].z = state[0].position.z;
+
+        jupiter[i].x = state[1].position.x;
+        jupiter[i].y = state[1].position.y;
+        jupiter[i].z = state[1].position.z;
+
+        saturn[i].x = state[2].position.x;
+        saturn[i].y = state[2].position.y;
+        saturn[i].z = state[2].position.z;
+
+        uranus[i].x = state[3].position.x;
+        uranus[i].y = state[3].position.y;
+        uranus[i].z = state[3].position.z;
+
+        neptune[i].x = state[4].position.x;
+        neptune[i].y = state[4].position.y;
+        neptune[i].z = state[4].position.z;
+
+        advance(state, 0.01);
     }
+    endTime = clock();//计时结束
+    std::cout << std::fixed << "uded:" <<(double)(endTime - startTime) / CLOCKS_PER_SEC << std::endl;
+    // 写入文件
+    std::ofstream outFile;
+    std::string path = "cpp_";
+    path.append(std::to_string(n));
+    outFile.open(path.append(".csv"), std::ios::out | std::ios::trunc);
+    // 写入标题行
+    outFile << "nbody" << ','
+            << "position x" << ','
+            << "position y" << ','
+            << "position z" << std::endl;
+    
+    for (int i = 0; i < n; ++i) {
+        outFile << "sun" << ','
+            << sun[i].x << ','
+            << sun[i].y << ','
+            << sun[i].z << std::endl;
+    }
+    for (int i = 0; i < n; ++i) {
+        outFile << "jupiter" << ','
+            << jupiter[i].x << ','
+            << jupiter[i].y << ','
+            << jupiter[i].z << std::endl;
+    }
+    for (int i = 0; i < n; ++i) {
+        outFile << "saturn" << ','
+            << saturn[i].x << ','
+            << saturn[i].y << ','
+            << saturn[i].z << std::endl;
+    }
+    for (int i = 0; i < n; ++i) {
+        outFile << "uranus" << ','
+            << uranus[i].x << ','
+            << uranus[i].y << ','
+            << uranus[i].z << std::endl;
+    }
+    for (int i = 0; i < n; ++i) {
+        outFile << "neptune" << ','
+            << neptune[i].x << ','
+            << neptune[i].y << ','
+            << neptune[i].z << std::endl;
+    }
+
+    std::cout << energy(state) << std::endl;
+    return EXIT_SUCCESS;
 }
+
+
+// int main(int argc, char **argv) {
+//     if (argc != 2) {
+//         std::cout << "This is " << argv[0] << std::endl;
+//         std::cout << "Call this program with an integer as program argument" << std::endl;
+//         std::cout << "(to set the number of iterations for the n-body simulation)." << std::endl;
+//         return EXIT_FAILURE;
+//     } else {
+//         const unsigned int n = atoi(argv[1]);
+//         offset_momentum(state);
+//         std::cout << energy(state) << std::endl;
+//         for (int i = 0; i < n; ++i) {
+//             advance(state, 0.01);
+//         }
+//         std::cout << energy(state) << std::endl;
+//         return EXIT_SUCCESS;
+//     }
+// }
